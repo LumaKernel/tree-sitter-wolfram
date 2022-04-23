@@ -1,0 +1,95 @@
+====================================
+a | b |-> c | d ===== (a | b) |-> (c | d)
+====================================
+
+a | b |-> c | d
+
+---
+
+(source_file
+  (function_arrow
+    (alternatives
+      (user_symbol)
+      (alternatives_operator)
+      (user_symbol))
+    (function_operator_right_arrow)
+    (alternatives
+      (user_symbol)
+      (alternatives_operator)
+      (user_symbol))))
+
+====================================
+a | b [] | c ===== a | (b []) | c
+====================================
+
+a | b [] | c
+
+---
+
+(source_file
+  (alternatives
+    (user_symbol)
+    (alternatives_operator)
+    (apply
+      (user_symbol)
+      (apply_bracket_begin)
+      (apply_bracket_end))
+    (alternatives_operator)
+    (user_symbol)))
+
+====================================
+a | b /@ c | d ===== a | (b /@ c) | d
+====================================
+
+a | b /@ c | d
+
+---
+
+(source_file
+  (alternatives
+    (user_symbol)
+    (alternatives_operator)
+    (map
+      (user_symbol)
+      (map_operator)
+      (user_symbol))
+    (alternatives_operator)
+    (user_symbol)))
+
+====================================
+a | b @@ c | d ===== a | (b @@ c) | d
+====================================
+
+a | b @@ c | d
+
+---
+
+(source_file
+  (alternatives
+    (user_symbol)
+    (alternatives_operator)
+    (apply_atat
+      (user_symbol)
+      (apply_atat_operator)
+      (user_symbol))
+    (alternatives_operator)
+    (user_symbol)))
+
+====================================
+a | b @@@ c | d ===== a | (b @@@ c) | d
+====================================
+
+a | b @@@ c | d
+
+---
+
+(source_file
+  (alternatives
+    (user_symbol)
+    (alternatives_operator)
+    (apply_atatat
+      (user_symbol)
+      (apply_atatat_operator)
+      (user_symbol))
+    (alternatives_operator)
+    (user_symbol)))

@@ -1,0 +1,47 @@
+{
+  "name": "tree-sitter-wolfram",
+  "version": "0.1.0",
+  "description": "",
+  "keywords": [],
+  "license": "MIT",
+  "author": "Luma",
+  "main": "bindings/node",
+  "scripts": {
+    "build": "tree-sitter generate",
+    "lint": "eslint \"**/*.{js,cjs,mjs,ts,tsx,json}\"",
+    "lint-fix": "pnpm run lint -- --fix",
+    "lint-quiet": "pnpm run lint -- --quiet",
+    "parse-test": "tree-sitter parse ./examples/**/*.w",
+    "test": "tree-sitter test",
+    "check:tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "nan": "^2.15.0"
+  },
+  "devDependencies": {
+    "@luma-dev/eslint-config-base": "^0.9.0",
+    "@luma-dev/prettier-config": "^0.1.0",
+    "eslint": "^7.16.0",
+    "npm-run-all": "^4.1.5",
+    "onchange": "^7.1.0",
+    "prettier": "^2.5.1",
+    "tree-sitter-cli": "^0.20.1",
+    "typescript": "^4.7.3"
+  },
+  "tree-sitter": [
+    {
+      "scope": "source.wolfram",
+      "file-types": [
+        "wl",
+        "m",
+        "wls",
+        "wlt",
+        "mt"
+      ],
+      "highlights": [
+        "queries/highlights.scm"
+      ],
+      "injection-regex": "wolfram"
+    }
+  ]
+}

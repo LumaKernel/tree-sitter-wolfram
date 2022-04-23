@@ -1,0 +1,35 @@
+==================
+a |-> b[1]
+==================
+
+a |-> b[1]
+
+---
+
+(source_file
+  (function_arrow
+    (user_symbol)
+    (function_operator_right_arrow)
+    (apply
+      (user_symbol)
+      (apply_bracket_begin)
+      (number)
+      (apply_bracket_end))))
+
+==================
+a |-> b[[1]]
+==================
+
+a |-> b[[1]]
+
+---
+
+(source_file
+  (function_arrow
+    (user_symbol)
+    (function_operator_right_arrow)
+    (part
+      (user_symbol)
+      (part_bracket_begin)
+      (number)
+      (part_bracket_end))))

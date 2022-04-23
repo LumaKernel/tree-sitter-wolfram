@@ -1,0 +1,55 @@
+==================
+Blank _
+==================
+
+_
+
+---
+
+(source_file
+  (blank))
+
+==================
+Blank _a
+==================
+
+_a
+
+---
+
+(source_file
+  (blank))
+
+==================
+Blank __a
+==================
+
+__a
+
+---
+
+(source_file
+  (blank_sequence))
+
+==================
+Blank ___a
+==================
+
+___a
+
+---
+
+(source_file
+  (blank_null_sequence))
+
+==================
+Blank ____a (___ times _a)
+==================
+
+____a
+
+---
+
+(source_file
+  (blank_null_sequence)
+  (blank))

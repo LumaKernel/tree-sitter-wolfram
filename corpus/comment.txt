@@ -1,0 +1,24 @@
+==================
+Comment single line
+==================
+
+(* comment "agc" *)
+
+---
+
+(source_file
+  (comment))
+
+==================
+Comment multi line
+==================
+
+(*
+  comment
+  "agc"
+*)
+
+---
+
+(source_file
+  (comment))

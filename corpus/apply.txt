@@ -1,0 +1,97 @@
+==================
+Apply Hello[]
+==================
+
+Hello[]
+
+---
+
+(source_file
+  (apply
+    (builtin_symbol)
+    (apply_bracket_begin)
+    (apply_bracket_end)))
+
+==================
+Apply Hello [ ]
+==================
+
+Hello [ ]
+
+---
+
+(source_file
+  (apply
+    (builtin_symbol)
+    (apply_bracket_begin)
+    (apply_bracket_end)))
+
+==================
+Apply Hello (* *)[(* *)]
+==================
+
+Hello (* *)[(* *)]
+
+---
+
+(source_file
+  (apply
+    (builtin_symbol)
+    (comment)
+    (apply_bracket_begin)
+    (comment)
+    (apply_bracket_end)))
+
+==================
+a @@ b @@ c ===== a @@ (b @@ c)
+==================
+
+a @@ b @@ c
+
+---
+
+(source_file
+  (apply_atat
+    (user_symbol)
+    (apply_atat_operator)
+    (apply_atat
+      (user_symbol)
+      (apply_atat_operator)
+      (user_symbol))))
+
+==================
+a @@@ b @@@ c ===== a @@@ (b @@@ c)
+==================
+
+a @@@ b @@@ c
+
+---
+
+(source_file
+  (apply_atatat
+    (user_symbol)
+    (apply_atatat_operator)
+    (apply_atatat
+      (user_symbol)
+      (apply_atatat_operator)
+      (user_symbol))))
+
+==================
+a @@ b @@@ c @@ d ===== a @@ (b @@@ (c @@ d))
+==================
+
+a @@ b @@@ c @@ d
+
+---
+
+(source_file
+  (apply_atat
+    (user_symbol)
+    (apply_atat_operator)
+    (apply_atatat
+      (user_symbol)
+      (apply_atatat_operator)
+      (apply_atat
+        (user_symbol)
+        (apply_atat_operator)
+        (user_symbol)))))

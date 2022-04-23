@@ -1,0 +1,43 @@
+==================
+Positive
+==================
+
++b
+
+---
+
+(source_file
+  (positive
+    (positive_operator)
+    (user_symbol)))
+
+==================
+Plus
+==================
+
+a+b
+
+---
+
+(source_file
+  (plus
+    (user_symbol)
+    (plus_operator)
+    (user_symbol)))
+
+==================
+Plus
+==================
+
++a+b
+
+---
+
+(source_file
+  (positive
+    (positive_operator)
+    (plus
+      (user_symbol)
+      (plus_operator)
+      (user_symbol))))
+

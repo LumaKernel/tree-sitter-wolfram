@@ -1,0 +1,46 @@
+==================
+Part list[[2]]
+==================
+
+list[[2]]
+
+---
+
+(source_file
+  (part
+    (user_symbol)
+    (part_bracket_begin)
+    (number)
+    (part_bracket_end)))
+
+==================
+Part list [[ 2 ]]
+==================
+
+list [[ 2 ]]
+
+---
+
+(source_file
+  (part
+    (user_symbol)
+    (part_bracket_begin)
+    (number)
+    (part_bracket_end)))
+
+==================
+Part list (* *) [[ (* *) 2 ]]
+==================
+
+list (* *) [[ (* *) 2 ]]
+
+---
+
+(source_file
+  (part
+    (user_symbol)
+    (comment)
+    (part_bracket_begin)
+    (comment)
+    (number)
+    (part_bracket_end)))
