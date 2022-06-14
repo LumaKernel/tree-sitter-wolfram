@@ -1,0 +1,45 @@
+==================
+a -> b
+==================
+
+a -> b
+
+---
+
+(source_file
+  (rule_ascii_top
+    (user_symbol)
+    (rule_ascii_operator)
+    (user_symbol)))
+
+==================
+f[a -> b]
+==================
+
+f[a -> b]
+
+---
+
+(source_file
+  (apply
+    (user_symbol)
+    (apply_bracket_begin)
+    (rule_ascii
+      (user_symbol)
+      (rule_ascii_operator)
+      (user_symbol))
+    (apply_bracket_end)))
+
+==================
+a :> b
+==================
+
+a :> b
+
+---
+
+(source_file
+  (rule_delayed_ascii_top
+    (user_symbol)
+    (rule_delayed_ascii_operator)
+    (user_symbol)))

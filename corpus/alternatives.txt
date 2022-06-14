@@ -7,13 +7,13 @@ a | b |-> c | d
 ---
 
 (source_file
-  (function_arrow
-    (alternatives
+  (function_arrow_top
+    (alternatives_top
       (user_symbol)
       (alternatives_operator)
       (user_symbol))
-    (function_operator_right_arrow)
-    (alternatives
+    (function_arrow_operator)
+    (alternatives_top
       (user_symbol)
       (alternatives_operator)
       (user_symbol))))
@@ -27,7 +27,7 @@ a | b [] | c
 ---
 
 (source_file
-  (alternatives
+  (alternatives_top
     (user_symbol)
     (alternatives_operator)
     (apply
@@ -46,10 +46,10 @@ a | b /@ c | d
 ---
 
 (source_file
-  (alternatives
+  (alternatives_top
     (user_symbol)
     (alternatives_operator)
-    (map
+    (map_top
       (user_symbol)
       (map_operator)
       (user_symbol))
@@ -65,10 +65,10 @@ a | b @@ c | d
 ---
 
 (source_file
-  (alternatives
+  (alternatives_top
     (user_symbol)
     (alternatives_operator)
-    (apply_atat
+    (apply_atat_top
       (user_symbol)
       (apply_atat_operator)
       (user_symbol))
@@ -84,10 +84,10 @@ a | b @@@ c | d
 ---
 
 (source_file
-  (alternatives
+  (alternatives_top
     (user_symbol)
     (alternatives_operator)
-    (apply_atatat
+    (apply_atatat_top
       (user_symbol)
       (apply_atatat_operator)
       (user_symbol))

@@ -1,0 +1,41 @@
+==================
+Hello[a
+->
+b]
+==================
+
+Hello[a
+->
+b]
+
+---
+
+(source_file
+  (apply
+    (builtin_symbol)
+    (apply_bracket_begin)
+    (rule_ascii
+      (user_symbol)
+      (rule_ascii_operator)
+      (user_symbol))
+    (apply_bracket_end)))
+
+==================
+Hello[a ->
+b]
+==================
+
+Hello[a ->
+b]
+
+---
+
+(source_file
+  (apply
+    (builtin_symbol)
+    (apply_bracket_begin)
+    (rule_ascii
+      (user_symbol)
+      (rule_ascii_operator)
+      (user_symbol))
+    (apply_bracket_end)))

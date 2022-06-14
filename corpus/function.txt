@@ -7,9 +7,9 @@ a |-> b[1]
 ---
 
 (source_file
-  (function_arrow
+  (function_arrow_top
     (user_symbol)
-    (function_operator_right_arrow)
+    (function_arrow_operator)
     (apply
       (user_symbol)
       (apply_bracket_begin)
@@ -25,9 +25,9 @@ a |-> b[[1]]
 ---
 
 (source_file
-  (function_arrow
+  (function_arrow_top
     (user_symbol)
-    (function_operator_right_arrow)
+    (function_arrow_operator)
     (part
       (user_symbol)
       (part_bracket_begin)

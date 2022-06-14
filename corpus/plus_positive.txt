@@ -1,5 +1,5 @@
 ==================
-Positive
++b
 ==================
 
 +b
@@ -7,12 +7,12 @@ Positive
 ---
 
 (source_file
-  (positive
+  (positive_top
     (positive_operator)
     (user_symbol)))
 
 ==================
-Plus
+a+b
 ==================
 
 a+b
@@ -20,13 +20,30 @@ a+b
 ---
 
 (source_file
-  (plus
+  (plus_top
     (user_symbol)
     (plus_operator)
     (user_symbol)))
 
 ==================
-Plus
+{a+b}
+==================
+
+{a+b}
+
+---
+
+(source_file
+  (list
+    (list_bracket_begin)
+    (plus
+      (user_symbol)
+      (plus_operator)
+      (user_symbol))
+    (list_bracket_end)))
+
+==================
++a+b
 ==================
 
 +a+b
@@ -34,10 +51,25 @@ Plus
 ---
 
 (source_file
-  (positive
-    (positive_operator)
-    (plus
-      (user_symbol)
-      (plus_operator)
-      (user_symbol))))
+  (plus_top
+    (positive_top
+      (positive_operator)
+      (user_symbol))
+    (plus_operator)
+    (user_symbol)))
 
+==================
+-a+b
+==================
+
+-a+b
+
+---
+
+(source_file
+  (plus_top
+    (negative_top
+      (negative_operator)
+      (user_symbol))
+    (plus_operator)
+    (user_symbol)))

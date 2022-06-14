@@ -30,7 +30,10 @@ module.exports = {
             argsIgnorePattern: '^_|^\\$$',
           },
         ],
-        quotes: ['off'],
+        camelcase: 'off',
+        quotes: 'off',
+        'no-restricted-syntax': 'off',
+        'no-param-reassign': 'off',
       },
 
       env: {
@@ -48,6 +51,7 @@ module.exports = {
           },
         ],
         'no-underscore-dangle': 'off',
+        camelcase: 'off',
       },
 
       env: {

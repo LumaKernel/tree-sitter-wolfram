@@ -1,8 +1,53 @@
 // @ts-check
 /// <reference path="./node_modules/tree-sitter-cli/dsl.d.ts" />
 
-/** @type any */
-const EXTERNAL = Symbol('EXTERNAL RULE');
+/** @type RuleBuilder<any> */
+const EXTERNAL = (() => {
+  /** @type any */
+  const tmp = Symbol('EXTERNAL');
+  return tmp;
+})();
+
+/** @type Rule */
+const EXPR_KEEP = (() => {
+  /** @type any */
+  const tmp = Symbol('EXPR_KEEP');
+  return tmp;
+})();
+
+/** @type Rule */
+const NULLABLE_EXPR_KEEP = (() => {
+  /** @type any */
+  const tmp = Symbol('NULLABLE_EXPR_KEEP');
+  return tmp;
+})();
+
+/** @type Rule */
+const EXPR1_KEEP = (() => {
+  /** @type any */
+  const tmp = Symbol('EXPR_KEEP');
+  return tmp;
+})();
+
+/** @type Rule */
+const EXPR1_UNARY_KEEP = (() => {
+  /** @type any */
+  const tmp = Symbol('EXPR1_UNARY_KEEP');
+  return tmp;
+})();
+
+const defaultReplacer = (/** @type any */ e) => e;
+let globalReplacer = defaultReplacer;
+
+// const dump = (obj) => {
+//   const fs = require('fs');
+//   const util = require('util');
+//   const path = require('path');
+//   const { homedir } = require('os');
+//   const debugLogFile = path.resolve(homedir(), 'node-debug.log');
+//
+//   fs.appendFileSync(debugLogFile, `${new Date().toLocaleTimeString()}: ${util.inspect(obj)}\n`);
+// };
 
 /** @type typeof grammar */
 const grammar0 = (/** @type any */ e) => {
@@ -11,6 +56,23 @@ const grammar0 = (/** @type any */ e) => {
     rules: Object.fromEntries(Object.entries(e.rules).filter(([, v]) => v !== EXTERNAL)),
   });
 };
+
+/* eslint-disable no-unused-vars */
+/** @type typeof seq */
+const seq0 = (/** @type any */ ...args) => {
+  return seq(...args.map((/** @type any */ e) => globalReplacer(e)));
+};
+
+/** @type typeof optional */
+const optional0 = (/** @type any */ rule) => {
+  return optional(globalReplacer(rule));
+};
+
+/** @type typeof choice */
+const choice0 = (/** @type any */ ...args) => {
+  return choice(...args.map((/** @type any */ e) => globalReplacer(e)));
+};
+/* eslint-enable no-unused-vars */
 
 const REP = Symbol('rep');
 // https://reference.wolfram.com/language/tutorial/OperatorInputForms.html
@@ -97,10 +159,14 @@ const PREC_ORIG = [
     POWER: prec.right,
     POWER_SUBSCRIPT: prec.left,
   },
+  // <SQRT> split by technical reason
   {
     SQRT: prec,
+  },
+  {
     ANY_ROOT: prec,
   },
+  // </SQRT>
   {
     DIFFERENTIAL_D: prec,
     DEL: prec,
@@ -198,10 +264,16 @@ const PREC_ORIG = [
   {
     EQUAL_REP: REP,
     UNEQUAL_REP: REP,
+    EQUAL_ASCII_REP: REP,
+    UNEQUAL_ASCII_REP: REP,
     GREATER_REP: REP,
     GREATER_EQUAL_REP: REP,
+    GREATER_ASCII_REP: REP,
+    GREATER_EQUAL_ASCII_REP: REP,
     LESS_REP: REP,
     LESS_EQUAL_REP: REP,
+    LESS_ASCII_REP: REP,
+    LESS_EQUAL_ASCII_REP: REP,
   },
   {
     DOUBLE_VERTICAL_BAR_REP: REP,
@@ -324,6 +396,11 @@ const PREC_ORIG = [
     PUT: prec,
     PUT_APPEND: prec,
   },
+
+  //
+  {
+    COMPOUND_EXPRESSION_REP: prec,
+  },
 ];
 /**
  * @type Tmp2<
@@ -334,347 +411,620 @@ const PREC = (() => {
   /** @type any */
   const tmp = Object.fromEntries(
     PREC_ORIG.flatMap((e, i) =>
-      Object.entries(e).flatMap(([key, grouping]) => [
+      Object.entries(e).flatMap(([key, grouping]) =>
         key.endsWith('_REP')
           ? [
-              key,
-              (/** @type any */ $, /** @type any */ sepRule) =>
-                prec.left(-i * 2, seq($._expr, repeat1(prec(-i * 2 + 1, seq(sepRule, $._expr))))),
+              [
+                key,
+                (/** @type RuleOrLiteral */ rule, /** @type RuleOrLiteral */ sepRule) =>
+                  prec.left(-i * 2, seq0(rule, repeat1(prec(-i * 2 + 1, seq0(sepRule, rule))))),
+              ],
+              [key.slice(0, -'_REP'.length), (/** @type any */ rule) => prec(-i * 2, rule)],
             ]
-          : [key, (/** @type any */ rule) => grouping(-i * 2, rule)],
-      ]),
+          : [[key, (/** @type any */ rule) => grouping(-i * 2, rule)]],
+      ),
     ),
   );
   return tmp;
 })();
 
+// const walk = (/** @type any */ tree, /** @type any */ replacer) => {
+//   if (tree == null) return replacer(tree);
+//   if (typeof tree === 'object') {
+//     for (const key of Object.keys(tree)) {
+//       tree[key] = walk(tree[key]);
+//     }
+//   }
+//   return replacer(tree);
+// };
+
+/**
+ * @type Tmp5
+ */
+const tmp5 = (() => {
+  /** @type any */
+  const tmp = (/** @type any */ rules) => {
+    const keys = Object.keys(rules);
+    const op_names = keys.filter(
+      (e) => !e.endsWith('_operator') && !e.endsWith('_operator_left') && !e.endsWith('_operator_right'),
+    );
+    return {
+      ...Object.fromEntries(
+        Object.entries(rules).flatMap(([name, builder]) => {
+          const replacer =
+            (
+              /** @type any */ expr,
+              /** @type any */ expr1,
+              /** @type any */ expr1_unary,
+              /** @type any */ nullable_expr,
+            ) =>
+            (/** @type any */ e) => {
+              if (e === EXPR_KEEP) {
+                return expr;
+              }
+              if (e === EXPR1_KEEP) {
+                return expr1;
+              }
+              if (e === EXPR1_UNARY_KEEP) {
+                return expr1_unary;
+              }
+              if (e === NULLABLE_EXPR_KEEP) {
+                return nullable_expr;
+              }
+              return e;
+            };
+          return [
+            [
+              name,
+              (/** @type any */ $) => {
+                globalReplacer = replacer(
+                  //
+                  $._expr,
+                  $._expr1,
+                  $._expr1_unary,
+                  choice($._expr),
+                );
+                const r = builder($);
+                globalReplacer = defaultReplacer;
+                return r;
+              },
+            ],
+            [
+              `${name}_top`,
+              (/** @type any */ $) => {
+                globalReplacer = replacer($._expr_top, $._expr1_top, $._expr1_unary_top, $._expr_top);
+                const r = builder($);
+                globalReplacer = defaultReplacer;
+                return r;
+              },
+            ],
+            // [`${name}_top`, (/** @type any */ $) => builder($)],
+            // [name, (/** @type any */ $) => builder({ ...$, EXPR_KEEP: $._expr, EXPR1_KEEP: $._expr1 })],
+            // [
+            //   `${name}_top`,
+            //   (/** @type any */ $) => builder({ ...$, EXPR_KEEP: $._expr_top, EXPR1_KEEP: $._expr1_top }),
+            // ],
+          ];
+        }),
+      ),
+      _expr_op_top: (/** @type any */ $) => choice(...op_names.map((e) => $[`${e}_top`])),
+      _expr_op: (/** @type any */ $) => prec(35, choice(...op_names.map((e) => $[e]))),
+    };
+  };
+  return tmp;
+})();
+
 module.exports = grammar0({
   name: 'wolfram',
-  extras: ($) => [/\s/, $.comment],
+  extras: ($) => [/[ \t]/, $.comment],
   externals: (/** @type any */ $) => [$.comment],
   conflicts: ($) => [
     [$.underscript, $.underoverscript, $.overunderscript],
+    [$.underscript_top, $.underoverscript_top, $.overunderscript_top],
     [$.overscript, $.underscript, $.underoverscript],
+    [$.overscript_top, $.underscript_top, $.underoverscript_top],
     [$.overscript_operator, $.overunderscript_operator_left],
     [$.underscript_operator, $.underoverscript_operator_left],
     [$.subscript_operator, $.subscript_power_operator_left],
     [$.tilde_operator_left, $.tilde_operator_right],
     [$.power, $.power_subscript],
+    [$.power_top, $.power_subscript_top],
     [$.sqrt, $.any_root],
+    [$.sqrt_top, $.any_root_top],
+    [$._expr1_unary],
+    [$._expr1],
+    [$._expr1_unary_special, $._expr1],
+    [$._expr1_unary_special_top, $._expr1_top],
+    [$._expr1_unary, $._expr1_unary_special],
+    [$._expr1_unary_top, $._expr1_unary_special_top],
+    [$._expr1_unary, $._expr1],
+    [$._expr1_unary_top, $._expr1_top],
+    [$._expr1_unary, $._expr_op],
+    [$._expr1_unary_top, $._expr_op_top],
+    [$._expr1_unary_special_top, $._expr_op_top],
+    [$._expr1_unary, $._expr1_unary_special, $._expr_op],
+    [$._expr1_unary_special, $._expr_op],
+    [$._expr1_unary_special_top],
+    [$._expr1_unary, $._expr1_unary_special, $._expr1],
+    [$._expr1_unary_special],
+    [$.compound_expression],
+    [$._expr1, $.compound_expression],
+    [$._expr1_unary, $._expr1_unary_special, $._expr1, $.compound_expression],
   ],
 
   rules: {
     comment: EXTERNAL,
 
-    source_file: ($) => repeat(choice(prec(-100000, $._expr), ';')),
-    _expr: ($) =>
+    source_file: ($) =>
+      seq(
+        // drop starting empty lines
+        repeat(/\n+/),
+        optional(seq(repeat(seq($._expr_top, repeat1(/\n+/))), $._expr_top, repeat(/\n+/))),
+      ),
+    // f: ($) => seq(repeat(seq($._expr_top, repeat1(/\n+/))), $._expr_top, repeat(/\n+/)),
+    // source_file: ($) => $.plus,
+    // https://reference.wolfram.com/language/ref/CompoundExpression.html
+    _parenthesized_expr: ($) => seq($.parenthesis_begin, $._expr, $.parenthesis_end),
+    parenthesis_begin: ($) => '(',
+    parenthesis_end: ($) => ')',
+    // _expr_space_multiplied: ($) => prec(-300000, seq($._expr, repeat($._expr))),
+    // _expr_0: ($) => prec.left(3000, seq($._expr1, repeat($._expr1))),
+    // _expr: ($) => prec.left(-300000, seq($._expr1, repeat($._expr1))),
+    // _expr: ($) =>
+    _expr_finished: ($) =>
       choice(
+        $._parenthesized_expr,
         $._symbol,
-        $.apply,
-        $.list,
-        $.part,
-        $.association,
-        $.number,
-        $._function,
         $.blank,
         $.blank_sequence,
         $.blank_null_sequence,
-        $.alternatives,
-        $.message_name,
-        $.get,
-        $.overscript,
-        $.underscript,
-        $.underoverscript,
-        $.overunderscript,
-        $.subscript,
-        $.subscript_power,
-        $.pattern_test,
-        $.increment,
-        $.decrement,
-        $.pre_increment,
-        $.pre_decrement,
-        $.composition,
-        $.right_composition,
-        // $.application,
-        $.apply_at,
-        $.tilde,
-        $.map,
-        $.map_all,
-        $.apply_atat,
-        $.apply_atatat,
-        $.factorial,
-        $.factorial2,
-        $.derivative,
-        $.string_join,
-        $.power,
-        $.power_subscript,
-        $.sqrt,
-        $.any_root,
-        // $.diffrential_d,
-        $.del,
-        // $.square,
-        $.small_circle,
-        $.circle_dot,
-        $.non_commutative_multiply,
-        // $.cross,
-        $.dot,
-        $.negative,
-        $.positive,
-        // prec(20000, $.positive),
-        // $._foo,
-        $.negative_positive,
-        $.per,
-        $.divide,
-        $.divide_box,
-        $.backslash,
-        $.diamond,
-        $.wedge,
-        $.vee,
-        $.circle_times,
-        $.circle_dot,
-        $.times_ast,
-        $.times_cross,
-        $.star,
-        $.vertical_tilde,
-        $.coproduct,
-        // $.cap,
-        // $.cup,
-        $.circle_plus,
-        $.circle_minus,
-        // $.integrate
-        // prec(10000, $.plus),
-        $.plus,
-        $.minus,
-        $.plus_minus,
         $.string,
+        $.number,
+
+        // op
+        $.list,
+        $.association,
+        $.apply,
+        $.part,
       ),
-    // _foo: ($) => choice($.plus, $.positive),
-    // _foo1: ($) => prec(200000, $.plus),
-    // _foo2: ($) => prec(100000, $.positive),
+    // _expr_function: ($) => choice($._function),
+    // _expr_rep_op: ($) =>
+    //   choice(
+    //     $.alternatives,
+    //     $.message_name,
+    //     $.composition,
+    //     $.right_composition,
+    //     $.equal_ascii,
+    //     $.unequal_ascii,
+    //     $.greater_ascii,
+    //     $.greater_equal_ascii,
+    //     $.less_ascii,
+    //     $.less_equal_ascii,
+    //     $.plus,
+    //     $.minus,
+    //     $.backslash,
+    //     $.diamond,
+    //     $.wedge,
+    //     $.vee,
+    //     $.circle_times,
+    //     $.times_ast,
+    //     $.times_cross,
+    //     $.star,
+    //     $.vertical_tilde,
+    //     $.coproduct,
+    //     $.small_circle,
+    //     $.circle_dot,
+    //     $.non_commutative_multiply,
+    //     $.dot,
+    //     $.string_join,
+    //   ),
+    // _expr_op: ($) =>
+    //   choice(
+    //     $.part,
+    //     $.apply,
+    //     $.get,
+    //     $.overscript,
+    //     $.underscript,
+    //     $.underoverscript,
+    //     $.overunderscript,
+    //     $.subscript,
+    //     $.subscript_power,
+    //     $.pattern_test,
+    //     $.rule_ascii,
+    //     $.rule_delayed_ascii,
+    //     $.apply_at,
+    //     $.tilde,
+    //     $.map,
+    //     $.map_all,
+    //     $.apply_atat,
+    //     $.apply_atatat,
+    //     $.factorial,
+    //     $.factorial2,
+    //     $.derivative,
+    //     $.power,
+    //     $.power_subscript,
+    //     $.sqrt,
+    //     $.any_root,
+    //     $.per,
+    //     $.divide,
+    //     $.divide_box,
+    //     $.circle_plus,
+    //     $.circle_minus,
+    //     $.plus_minus,
+    //   ),
+    // _expr_unary_op: ($) =>
+    //   choice(
+    //     //
+    //     $.positive,
+    //     $.negative,
+    //     $.negative_positive,
+    //     $.increment,
+    //     $.decrement,
+    //     $.pre_increment,
+    //     $.pre_decrement,
+    //     $.del,
+    //   ),
+    // _expr_top: ($) => prec.left(seq($._expr1_top, repeat(prec.left($._expr1_top)))),
+    // _expr: ($) => prec.left(seq($._expr1, prec.left(repeat($._expr1)))),
+    _expr_top: ($) => prec.left(30, choice(seq($._expr1_top, repeat($._expr1_unary_special_top)))),
+    _expr: ($) => prec(20, choice(prec.left(seq($._expr1_unary_special, repeat1($._expr1_unary_special))), $._expr1)),
+    _expr1_unary_top: ($) =>
+      prec(
+        20,
+        choice(
+          $._expr_finished,
+          //
+          $.positive_top,
+          $.negative_top,
+          $.negative_positive_top,
+          $.increment_top,
+          $.decrement_top,
+          $.pre_increment_top,
+          $.pre_decrement_top,
+          $.del_top,
+        ),
+      ),
+    _expr1_unary: ($) =>
+      prec(
+        30,
+        seq(
+          repeat(/\n+/),
+          choice(
+            $._expr_finished,
+            //
+            $.positive,
+            $.negative,
+            $.negative_positive,
+            $.increment,
+            $.decrement,
+            $.pre_increment,
+            $.pre_decrement,
+            $.del,
+          ),
+          repeat(/\n+/),
+        ),
+      ),
+    _expr1_unary_special_top: ($) =>
+      seq(
+        choice(
+          $._expr_finished,
+          //
+          $.increment_top,
+          $.decrement_top,
+          $.pre_increment_top,
+          $.pre_decrement_top,
+          $.del_top,
+        ),
+      ),
+    _expr1_unary_special: ($) =>
+      prec.left(
+        seq(
+          repeat(/\n+/),
+          choice(
+            $._expr_finished,
+            //
+            $.increment,
+            $.decrement,
+            $.pre_increment,
+            $.pre_decrement,
+            $.del,
+          ),
+          repeat(/\n+/),
+        ),
+      ),
+    _expr1_top: ($) => choice($._expr_finished, $._expr_op_top),
+    _expr1: ($) =>
+      prec.left(
+        32,
+        seq(
+          repeat(/\n+/),
+          choice(
+            //
+            prec.left(40, $._expr_finished),
+            $._expr_op,
+          ),
+          repeat(/\n+/),
+        ),
+      ),
     _expr_repeat: ($) => seq($._expr, repeat(seq(',', $._expr))),
 
-    apply: ($) => PREC.APPLY(seq($._expr, $.apply_bracket_begin, optional($._expr_repeat), $.apply_bracket_end)),
+    // <OPERATORS>
+
+    ...tmp5({
+      // <UNARY>
+
+      increment: ($) => PREC.INCREMENT(seq0(EXPR1_UNARY_KEEP, $.increment_operator)),
+      increment_operator: ($) => '++',
+
+      decrement: ($) => PREC.DECREMENT(seq0(EXPR1_UNARY_KEEP, $.decrement_operator)),
+      decrement_operator: ($) => '--',
+
+      pre_increment: ($) => PREC.PRE_INCREMENT(seq0($.pre_increment_operator, EXPR1_UNARY_KEEP)),
+      pre_increment_operator: ($) => '++',
+
+      pre_decrement: ($) => PREC.PRE_DECREMENT(seq0($.pre_decrement_operator, EXPR1_UNARY_KEEP)),
+      pre_decrement_operator: ($) => '--',
+
+      positive: ($) => PREC.POSITIVE(seq0($.positive_operator, EXPR1_UNARY_KEEP)),
+      positive_operator: ($) => '+',
+
+      negative: ($) => PREC.NEGATIVE(seq0($.negative_operator, EXPR1_UNARY_KEEP)),
+      negative_operator: ($) => '-',
+
+      negative_positive: ($) => PREC.NEGATIVE_POSITIVE(seq0($.negative_positive_operator, EXPR1_UNARY_KEEP)),
+      negative_positive_operator: ($) => '±',
+
+      del: ($) => PREC.DEL(seq0($.del_operator, EXPR1_UNARY_KEEP)),
+      del_operator: ($) => '∇',
+
+      // </UNARY>
+
+      subscript: ($) => PREC.SUBSCRIPT(seq0(EXPR_KEEP, $.subscript_operator, EXPR_KEEP)),
+      subscript_operator: ($) => '\\_',
+
+      subscript_power: ($) =>
+        PREC.SUBSCRIPT_POWER(
+          seq0(EXPR_KEEP, $.subscript_power_operator_left, EXPR_KEEP, $.subscript_power_operator_right, EXPR_KEEP),
+        ),
+      subscript_power_operator_left: ($) => '\\_',
+      subscript_power_operator_right: ($) => '\\%',
+
+      // compound_expression: ($) => PREC.COMPOUND_EXPRESSION_REP(NULLABLE_EXPR_KEEP, $.compound_expression_operator),
+      // compound_expression_operator: ($) => ';',
+
+      compound_expression: ($) =>
+        prec.left(
+          40000,
+          seq0(
+            NULLABLE_EXPR_KEEP,
+            prec(8000, repeat1(prec(450, seq0($.compound_expression_operator, NULLABLE_EXPR_KEEP)))),
+          ),
+        ),
+      compound_expression_operator: ($) => ';',
+
+      pattern_test: ($) => PREC.PATTERN_TEST(seq0(EXPR_KEEP, $.pattern_test_operator, EXPR_KEEP)),
+      pattern_test_operator: ($) => '?',
+
+      equal_ascii: ($) => PREC.EQUAL_REP(EXPR_KEEP, $.equal_ascii_operator),
+      equal_ascii_operator: ($) => '==',
+
+      unequal_ascii: ($) => PREC.UNEQUAL_ASCII_REP(EXPR_KEEP, $.unequal_ascii_operator),
+      unequal_ascii_operator: ($) => '!=',
+
+      greater_ascii: ($) => PREC.GREATER_ASCII_REP(EXPR_KEEP, $.greater_ascii_operator),
+      greater_ascii_operator: ($) => '>',
+
+      greater_equal_ascii: ($) => PREC.GREATER_EQUAL_ASCII_REP(EXPR_KEEP, $.greater_equal_ascii_operator),
+      greater_equal_ascii_operator: ($) => '>=',
+
+      less_ascii: ($) => PREC.LESS_ASCII_REP(EXPR_KEEP, $.less_ascii_operator),
+      less_ascii_operator: ($) => '<',
+
+      less_equal_ascii: ($) => PREC.LESS_EQUAL_ASCII_REP(EXPR_KEEP, $.less_equal_ascii_operator),
+      less_equal_ascii_operator: ($) => '<=',
+
+      rule_ascii: ($) => PREC.RULE_ASCII(seq0(EXPR_KEEP, $.rule_ascii_operator, EXPR_KEEP)),
+      rule_ascii_operator: ($) => '->',
+
+      rule_delayed_ascii: ($) => PREC.RULE_DELAYED_ASCII(seq0(EXPR_KEEP, $.rule_delayed_ascii_operator, EXPR_KEEP)),
+      rule_delayed_ascii_operator: ($) => ':>',
+
+      message_name: ($) => PREC.MESSAGE_NAME_REP(EXPR_KEEP, $.message_name_operator),
+      message_name_operator: ($) => '::',
+
+      apply_at: ($) => PREC.APPLY_AT(seq0(EXPR_KEEP, $.apply_at_operator, EXPR_KEEP)),
+      apply_at_operator: ($) => '@',
+
+      tilde: ($) => PREC.TILDE(seq0(EXPR_KEEP, $.tilde_operator_left, EXPR_KEEP, $.tilde_operator_right, EXPR_KEEP)),
+      tilde_operator_left: ($) => '~',
+      tilde_operator_right: ($) => '~',
+
+      composition: ($) => PREC.COMPOSITION_REP(EXPR_KEEP, $.composition_operator),
+      composition_operator: ($) => '@*',
+
+      right_composition: ($) => PREC.RIGHT_COMPOSITION_REP(EXPR_KEEP, $.right_composition_operator),
+      right_composition_operator: ($) => '/*',
+
+      get: ($) => PREC.GET(seq0($.get_operator, $.string)),
+      get_operator: ($) => '<<',
+
+      overscript: ($) => PREC.OVERSCRIPT(seq0(EXPR_KEEP, $.overscript_operator, EXPR_KEEP)),
+      overscript_operator: ($) => '\\&',
+
+      underscript: ($) => PREC.UNDERSCRIPT(seq0(EXPR_KEEP, $.underscript_operator, EXPR_KEEP)),
+      underscript_operator: ($) => '\\+',
+
+      underoverscript: ($) =>
+        PREC.UNDEROVERSCRIPT(
+          seq0(EXPR_KEEP, $.underoverscript_operator_left, EXPR_KEEP, $.underoverscript_operator_right, EXPR_KEEP),
+        ),
+      underoverscript_operator_left: ($) => '\\+',
+      underoverscript_operator_right: ($) => '\\%',
+
+      overunderscript: ($) =>
+        PREC.OVERUNDERSCRIPT(
+          seq0(EXPR_KEEP, $.overunderscript_operator_left, EXPR_KEEP, $.overunderscript_operator_right, EXPR_KEEP),
+        ),
+      overunderscript_operator_left: ($) => '\\&',
+      overunderscript_operator_right: ($) => '\\%',
+
+      // https://reference.wolfram.com/language/ref/Function.html
+      function_anonymous: ($) => PREC.FUNCTION_ANONYMOUS(seq0(EXPR_KEEP, $.function_anonymous_operator)),
+      function_anonymous_operator: ($) => '&',
+
+      function_arrow: ($) => PREC.FUNCTION_ARROW(seq0(EXPR_KEEP, $.function_arrow_operator, EXPR_KEEP)),
+      function_arrow_operator: ($) => '|->',
+
+      small_circle: ($) => PREC.SMALL_CIRCLE_REP(EXPR_KEEP, $.small_circle_operator),
+      small_circle_operator: ($) => '∘',
+
+      circle_dot: ($) => PREC.CIRCLE_DOT_REP(EXPR_KEEP, $.circle_dot_operator),
+      circle_dot_operator: ($) => '⊙',
+
+      non_commutative_multiply: ($) =>
+        PREC.NON_COMMUTATIVE_MULTIPLY_REP(EXPR_KEEP, $.non_commutative_multiply_operator),
+      non_commutative_multiply_operator: ($) => '**',
+
+      dot: ($) => PREC.DOT_REP(EXPR_KEEP, $.dot_operator),
+      dot_operator: ($) => '.',
+
+      backslash: ($) => PREC.BACKSLASH_REP(EXPR_KEEP, $.backslash_operator),
+      backslash_operator: ($) => '\\',
+
+      diamond: ($) => PREC.DIAMOND_REP(EXPR_KEEP, $.diamond_operator),
+      diamond_operator: ($) => '⋄',
+
+      wedge: ($) => PREC.WEDGE_REP(EXPR_KEEP, $.wedge_operator),
+      wedge_operator: ($) => '⋀',
+
+      vee: ($) => PREC.WEDGE_REP(EXPR_KEEP, $.vee_operator),
+      vee_operator: ($) => '⋁',
+
+      circle_times: ($) => PREC.CIRCLE_TIMES_REP(EXPR_KEEP, $.circle_times_operator),
+      circle_times_operator: ($) => '⊗',
+
+      center_dot: ($) => PREC.CENTER_DOT_REP(EXPR_KEEP, $.center_dot_operator),
+      center_dot_operator: ($) => '·',
+
+      times_ast: ($) => PREC.TIMES_AST_REP(EXPR_KEEP, $.times_ast_operator),
+      times_ast_operator: ($) => '*',
+
+      times_cross: ($) => PREC.TIMES_AST_REP(EXPR_KEEP, $.times_cross_operator),
+      times_cross_operator: ($) => '×',
+
+      star: ($) => PREC.STAR_REP(EXPR_KEEP, $.star_operator),
+      star_operator: ($) => '⋆',
+
+      vertical_tilde: ($) => PREC.VERTICAL_TILDE_REP(EXPR_KEEP, $.vertical_tilde_operator),
+      vertical_tilde_operator: ($) => '≀',
+
+      coproduct: ($) => PREC.COPRODUCT_REP(EXPR_KEEP, $.coproduct_operator),
+      coproduct_operator: ($) => '∐',
+
+      circle_plus: ($) => PREC.CIRCLE_PLUS_REP(EXPR_KEEP, $.circle_plus_operator),
+      circle_plus_operator: ($) => '⊕',
+
+      circle_minus: ($) => PREC.CIRCLE_MINUS(seq0(EXPR_KEEP, $.circle_minus_operator, EXPR_KEEP)),
+      circle_minus_operator: ($) => '⊖',
+
+      plus: ($) => PREC.PLUS_REP(EXPR_KEEP, $.plus_operator),
+      plus_operator: ($) => '+',
+
+      minus: ($) => PREC.MINUS_REP(EXPR_KEEP, $.minus_operator),
+      minus_operator: ($) => PREC.MINUS('-'),
+
+      plus_minus: ($) => PREC.PLUS_MINUS(seq0(EXPR_KEEP, $.plus_minus_operator, EXPR_KEEP)),
+      plus_minus_operator: ($) => PREC.PLUS_MINUS('±'),
+
+      per: ($) => PREC.PER(seq0(EXPR_KEEP, $.per_operator, EXPR_KEEP)),
+      per_operator: ($) => '/',
+
+      divide: ($) => PREC.DIVIDE(seq0(EXPR_KEEP, $.divide_operator, EXPR_KEEP)),
+      divide_operator: ($) => '÷',
+
+      divide_box: ($) => PREC.DIVIDE_BOX(seq0(EXPR_KEEP, $.divide_box_operator, EXPR_KEEP)),
+      divide_box_operator: ($) => '\\/',
+
+      // https://reference.wolfram.com/language/ref/Map.html
+      map: ($) => PREC.MAP(seq0(EXPR_KEEP, $.map_operator, EXPR_KEEP)),
+      map_operator: ($) => '/@',
+
+      map_all: ($) => PREC.MAP_ALL(seq0(EXPR_KEEP, $.map_all_operator, EXPR_KEEP)),
+      map_all_operator: ($) => '//@',
+
+      factorial: ($) => PREC.FACTORIAL(seq0(EXPR_KEEP, $.factorial_operator)),
+      factorial_operator: ($) => '!',
+
+      factorial2: ($) => PREC.FACTORIAL2(seq0(EXPR_KEEP, $.factorial2_operator)),
+      factorial2_operator: ($) => '!!',
+
+      derivative: ($) => PREC.DERIVATIVE(seq0(EXPR_KEEP, $.derivative_operator)),
+      derivative_operator: ($) => prec.right(repeat1("'")),
+
+      sqrt: ($) => PREC.SQRT(seq0(EXPR_KEEP, $.sqrt_operator)),
+      sqrt_operator: ($) => PREC.SQRT('\\@'),
+
+      any_root: ($) => PREC.ANY_ROOT(seq0($.any_root_operator_left, EXPR_KEEP, $.any_root_operator_right, EXPR_KEEP)),
+      any_root_operator_left: ($) => PREC.ANY_ROOT('\\@'),
+      any_root_operator_right: ($) => '\\%',
+
+      power: ($) => PREC.POWER(seq0(EXPR_KEEP, $.power_operator, EXPR_KEEP)),
+      power_operator: ($) => '^',
+
+      power_subscript: ($) =>
+        PREC.POWER_SUBSCRIPT(
+          seq0(EXPR_KEEP, $.power_subscript_operator_left, EXPR_KEEP, $.power_subscript_operator_right, EXPR_KEEP),
+        ),
+      power_subscript_operator_left: ($) => '\\^',
+      power_subscript_operator_right: ($) => '\\%',
+
+      // https://reference.wolfram.com/language/ref/Apply.html
+      apply_atat: ($) => PREC.APPLY_ATAT(seq0(EXPR_KEEP, $.apply_atat_operator, EXPR_KEEP)),
+      apply_atat_operator: ($) => '@@',
+
+      // https://reference.wolfram.com/language/ref/Apply.html
+      apply_atatat: ($) => PREC.APPLY_ATATAT(seq0(EXPR_KEEP, $.apply_atatat_operator, EXPR_KEEP)),
+      apply_atatat_operator: ($) => '@@@',
+
+      alternatives: ($) => PREC.ALTERNATIVES_REP(EXPR_KEEP, $.alternatives_operator),
+      alternatives_operator: ($) => '|',
+
+      string_join: ($) => PREC.STRING_JOIN_REP(EXPR_KEEP, $.string_join_operator),
+      string_join_operator: ($) => '<>',
+    }),
+
+    list: ($) => seq0($.list_bracket_begin, choice($._expr_repeat, repeat(/\n+/)), $.list_bracket_end),
+    list_bracket_begin: ($) => '{',
+    list_bracket_end: ($) => '}',
+
+    apply: ($) =>
+      PREC.APPLY(
+        seq0($._expr_finished, $.apply_bracket_begin, choice($._expr_repeat, repeat(/\n+/)), $.apply_bracket_end),
+      ),
     apply_bracket_begin: ($) => '[',
     apply_bracket_end: ($) => ']',
+
+    association: ($) =>
+      seq0($.association_bracket_begin, choice($._expr_repeat, repeat(/\n+/)), $.association_bracket_end),
+    association_bracket_begin: ($) => '<|',
+    association_bracket_end: ($) => '|>',
+
+    part: ($) =>
+      PREC.PART(
+        seq0($._expr_finished, $.part_bracket_begin, choice($._expr_repeat, repeat(/\n+/)), $.part_bracket_end),
+      ),
+    part_bracket_begin: ($) => '[[',
+    part_bracket_end: ($) => ']]',
+
+    // </OPERATORS>
 
     _symbol: ($) => choice($.user_symbol, $.builtin_symbol),
     user_symbol: ($) => $._lower_identifier,
     builtin_symbol: ($) => $._upper_identifier,
 
-    subscript: ($) => PREC.SUBSCRIPT(seq($._expr, $.subscript_operator, $._expr)),
-    subscript_operator: ($) => '\\_',
-
-    subscript_power: ($) =>
-      PREC.SUBSCRIPT_POWER(
-        seq($._expr, $.subscript_power_operator_left, $._expr, $.subscript_power_operator_right, $._expr),
-      ),
-    subscript_power_operator_left: ($) => '\\_',
-    subscript_power_operator_right: ($) => '\\%',
-
-    pattern_test: ($) => PREC.PATTERN_TEST(seq($._expr, $.pattern_test_operator, $._expr)),
-    pattern_test_operator: ($) => '?',
-
-    message_name: ($) => PREC.MESSAGE_NAME_REP($, $.message_name_operator),
-    message_name_operator: ($) => '::',
-
-    apply_at: ($) => PREC.APPLY_AT(seq($._expr, $.apply_at_operator, $._expr)),
-    apply_at_operator: ($) => '@',
-
-    tilde: ($) => PREC.TILDE(seq($._expr, $.tilde_operator_left, $._expr, $.tilde_operator_right, $._expr)),
-    tilde_operator_left: ($) => '~',
-    tilde_operator_right: ($) => '~',
-
-    composition: ($) => PREC.COMPOSITION_REP($, $.composition_operator),
-    composition_operator: ($) => '@*',
-
-    right_composition: ($) => PREC.RIGHT_COMPOSITION_REP($, $.right_composition_operator),
-    right_composition_operator: ($) => '/*',
-
-    get: ($) => PREC.GET(seq($.get_operator, $.string)),
-    get_operator: ($) => '<<',
-
-    increment: ($) => PREC.INCREMENT(seq($._expr, $.increment_operator)),
-    increment_operator: ($) => '++',
-
-    decrement: ($) => PREC.DECREMENT(seq($._expr, $.decrement_operator)),
-    decrement_operator: ($) => '--',
-
-    pre_increment: ($) => PREC.PRE_INCREMENT(seq($.pre_increment_operator, $._expr)),
-    pre_increment_operator: ($) => '++',
-
-    pre_decrement: ($) => PREC.PRE_DECREMENT(seq($.pre_decrement_operator, $._expr)),
-    pre_decrement_operator: ($) => '--',
-
-    overscript: ($) => PREC.OVERSCRIPT(seq($._expr, $.overscript_operator, $._expr)),
-    overscript_operator: ($) => '\\&',
-
-    underscript: ($) => PREC.UNDERSCRIPT(seq($._expr, $.underscript_operator, $._expr)),
-    underscript_operator: ($) => '\\+',
-
-    underoverscript: ($) =>
-      PREC.UNDEROVERSCRIPT(
-        seq($._expr, $.underoverscript_operator_left, $._expr, $.underoverscript_operator_right, $._expr),
-      ),
-    underoverscript_operator_left: ($) => '\\+',
-    underoverscript_operator_right: ($) => '\\%',
-
-    overunderscript: ($) =>
-      PREC.OVERUNDERSCRIPT(
-        seq($._expr, $.overunderscript_operator_left, $._expr, $.overunderscript_operator_right, $._expr),
-      ),
-    overunderscript_operator_left: ($) => '\\&',
-    overunderscript_operator_right: ($) => '\\%',
-
-    list: ($) => seq($.list_bracket_begin, optional($._expr_repeat), $.list_bracket_end),
-    list_bracket_begin: ($) => '{',
-    list_bracket_end: ($) => '}',
-
-    part: ($) => PREC.PART(seq($._expr, $.part_bracket_begin, optional($._expr_repeat), $.part_bracket_end)),
-    part_bracket_begin: ($) => '[[',
-    part_bracket_end: ($) => ']]',
-
-    association: ($) => seq($._expr, $.association_bracket_begin, optional($._expr_repeat), $.association_bracket_end),
-    association_bracket_begin: ($) => '<|',
-    association_bracket_end: ($) => '|>',
-
-    // https://reference.wolfram.com/language/ref/Function.html
-    _function: ($) => choice($.function_anonymous, $.function_arrow),
-    function_anonymous: ($) => PREC.FUNCTION_ANONYMOUS(seq($._expr, $.function_operator_anonymous_end)),
-    function_arrow: ($) => PREC.FUNCTION_ARROW(seq($._expr, $.function_operator_right_arrow, $._expr)),
-    function_operator_anonymous_end: ($) => '&',
-    function_operator_right_arrow: ($) => '|->',
-
-    del: ($) => PREC.DEL(seq($.del_operator, $._expr)),
-    del_operator: ($) => '∇',
-
-    small_circle: ($) => PREC.SMALL_CIRCLE_REP($, $.small_circle_operator),
-    small_circle_operator: ($) => '∘',
-
-    circle_dot: ($) => PREC.CIRCLE_DOT_REP($, $.circle_dot_operator),
-    circle_dot_operator: ($) => '⊙',
-
-    non_commutative_multiply: ($) => PREC.NON_COMMUTATIVE_MULTIPLY_REP($, $.non_commutative_multiply_operator),
-    non_commutative_multiply_operator: ($) => '**',
-
-    dot: ($) => PREC.DOT_REP($, $.dot_operator),
-    dot_operator: ($) => '.',
-
-    backslash: ($) => PREC.BACKSLASH_REP($, $.backslash_operator),
-    backslash_operator: ($) => '\\',
-
-    diamond: ($) => PREC.DIAMOND_REP($, $.diamond_operator),
-    diamond_operator: ($) => '⋄',
-
-    wedge: ($) => PREC.WEDGE_REP($, $.wedge_operator),
-    wedge_operator: ($) => '⋀',
-
-    vee: ($) => PREC.WEDGE_REP($, $.vee_operator),
-    vee_operator: ($) => '⋁',
-
-    circle_times: ($) => PREC.CIRCLE_TIMES_REP($, $.circle_times_operator),
-    circle_times_operator: ($) => '⊗',
-
-    center_dot: ($) => PREC.CENTER_DOT_REP($, $.center_dot_operator),
-    center_dot_operator: ($) => '·',
-
-    times_ast: ($) => PREC.TIMES_AST_REP($, $.times_ast_operator),
-    times_ast_operator: ($) => '*',
-
-    times_cross: ($) => PREC.TIMES_AST_REP($, $.times_cross_operator),
-    times_cross_operator: ($) => '×',
-
-    star: ($) => PREC.STAR_REP($, $.star_operator),
-    star_operator: ($) => '⋆',
-
-    vertical_tilde: ($) => PREC.VERTICAL_TILDE_REP($, $.vertical_tilde_operator),
-    vertical_tilde_operator: ($) => '≀',
-
-    coproduct: ($) => PREC.COPRODUCT_REP($, $.coproduct_operator),
-    coproduct_operator: ($) => '∐',
-
-    circle_plus: ($) => PREC.CIRCLE_PLUS_REP($, $.circle_plus_operator),
-    circle_plus_operator: ($) => '⊕',
-
-    circle_minus: ($) => PREC.CIRCLE_MINUS(seq($._expr, $.circle_minus_operator, $._expr)),
-    circle_minus_operator: ($) => '⊖',
-
-    plus: ($) => PREC.PLUS_REP($, $.plus_operator),
-    plus_operator: ($) => '+',
-
-    minus: ($) => PREC.MINUS_REP($, $.minus_operator),
-    minus_operator: ($) => '-',
-
-    plus_minus: ($) => PREC.PLUS_MINUS(seq($._expr, $.plus_minus_operator, $._expr)),
-    plus_minus_operator: ($) => '±',
-
-    negative: ($) => PREC.NEGATIVE(seq($.negative_operator, $._expr)),
-    negative_operator: ($) => '-',
-
-    positive: ($) => PREC.POSITIVE(seq($.positive_operator, $._expr)),
-    positive_operator: ($) => '+',
-
-    negative_positive: ($) => PREC.NEGATIVE_POSITIVE(seq($.negative_positive_operator, $._expr)),
-    negative_positive_operator: ($) => '±',
-
-    per: ($) => PREC.PER(seq($._expr, $.per_operator, $._expr)),
-    per_operator: ($) => '/',
-
-    divide: ($) => PREC.DIVIDE(seq($._expr, $.divide_operator, $._expr)),
-    divide_operator: ($) => '÷',
-
-    divide_box: ($) => PREC.DIVIDE_BOX(seq($._expr, $.divide_box_operator, $._expr)),
-    divide_box_operator: ($) => '\\/',
-
-    // https://reference.wolfram.com/language/ref/Map.html
-    map: ($) => PREC.MAP(seq($._expr, $.map_operator, $._expr)),
-    map_operator: ($) => '/@',
-
-    map_all: ($) => PREC.MAP_ALL(seq($._expr, $.map_all_operator, $._expr)),
-    map_all_operator: ($) => '//@',
-
-    factorial: ($) => PREC.FACTORIAL(seq($._expr, $.factorial_operator)),
-    factorial_operator: ($) => '!',
-
-    factorial2: ($) => PREC.FACTORIAL2(seq($._expr, $.factorial2_operator)),
-    factorial2_operator: ($) => '!!',
-
-    derivative: ($) => PREC.DERIVATIVE(seq($._expr, $.derivative_operator)),
-    derivative_operator: ($) => prec.right(repeat1("'")),
-
-    sqrt: ($) => PREC.SQRT(seq($._expr, $.sqrt_operator)),
-    sqrt_operator: ($) => '\\@',
-
-    any_root: ($) => PREC.SQRT(seq($.any_root_operator_left, $._expr, $.any_root_operator_right, $._expr)),
-    any_root_operator_left: ($) => '\\@',
-    any_root_operator_right: ($) => '\\%',
-
-    power: ($) => PREC.POWER(seq($._expr, $.power_operator, $._expr)),
-    power_operator: ($) => '^',
-
-    power_subscript: ($) =>
-      PREC.POWER_SUBSCRIPT(
-        seq($._expr, $.power_subscript_operator_left, $._expr, $.power_subscript_operator_right, $._expr),
-      ),
-    power_subscript_operator_left: ($) => '\\^',
-    power_subscript_operator_right: ($) => '\\%',
-
-    // https://reference.wolfram.com/language/ref/Apply.html
-    apply_atat: ($) => PREC.APPLY_ATAT(seq($._expr, $.apply_atat_operator, $._expr)),
-    apply_atat_operator: ($) => '@@',
-
-    // https://reference.wolfram.com/language/ref/Apply.html
-    apply_atatat: ($) => PREC.APPLY_ATATAT(seq($._expr, $.apply_atatat_operator, $._expr)),
-    apply_atatat_operator: ($) => '@@@',
-
     blank: ($) => /_(?:[a-zA-Z][a-zA-Z0-9]*)?/,
     blank_sequence: ($) => /__(?:[a-zA-Z][a-zA-Z0-9]*)?/,
     blank_null_sequence: ($) => /___(?:[a-zA-Z][a-zA-Z0-9]*)?/,
-
-    alternatives: ($) => PREC.ALTERNATIVES_REP($, $.alternatives_operator),
-    alternatives_operator: ($) => '|',
-
-    string_join: ($) => PREC.STRING_JOIN_REP($, $.string_join_operator),
-    string_join_operator: ($) => '<>',
 
     string: ($) => seq('"', repeat(choice(/[^"\\\n]/, $.string_char_escape, $.string_char_name_escape)), '"'),
     string_char_escape: ($) => choice('\\"', '\\\\', '\\n', '\\r', '\\t', '\\t', '\\v'),
@@ -682,6 +1032,9 @@ module.exports = grammar0({
     string_char_name: ($) => $._upper_identifier,
     // Not supporting.
     // string_embedded_expression_escape: ($) => seq('\\!\\(\\*', ..., '\\)'),
+
+    // _expr_function: ($) => choice($.function_anonymous, $.function_arrow),
+    // _expr_function_top: ($) => choice($.function_anonymous, $.function_arrow),
 
     // https://wltools.github.io/LanguageSpec/Specification/Syntax/Number-representations/
     // Special character input forms are not supported.

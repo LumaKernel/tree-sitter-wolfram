@@ -7,6 +7,9 @@
 (string_char_name_escape) @string.special.char_name_escape
 (string_char_name) @string.special.char_name
 
+(parenthesis_begin) @punctuation.bracket.parenthesis.begin
+(parenthesis_end) @punctuation.bracket.parenthesis_end.begin
+
 (apply_bracket_begin) @punctuation.bracket.apply.begin
 (apply_bracket_end) @punctuation.bracket.apply.end
 (list_bracket_begin) @punctuation.bracket.list.begin
@@ -16,6 +19,8 @@
 (association_bracket_begin) @punctuation.bracket.association.begin
 (association_bracket_end) @punctuation.bracket.association.end
 
+(compound_expression) @punctuation.delimiter.compound_expression
+
 (subscript_operator) @operator.subscript
 (pattern_test_operator) @operator.pattern_test
 (message_name_operator) @operator.message_name
@@ -23,6 +28,8 @@
 (composition_operator) @operator.composition
 (right_composition_operator) @operator.right_composition
 (get_operator) @operator.get
+(rule_ascii_operator) @operator.rule_ascii
+(rule_delayed_ascii_operator) @operator.rule_delayed_ascii
 (increment_operator) @operator.increment
 (decrement_operator) @operator.decrement
 (pre_increment_operator) @operator.pre_increment

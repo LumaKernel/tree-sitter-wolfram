@@ -1,5 +1,5 @@
 ==================
-Apply Hello[]
+Hello[]
 ==================
 
 Hello[]
@@ -13,7 +13,7 @@ Hello[]
     (apply_bracket_end)))
 
 ==================
-Apply Hello [ ]
+Hello [ ]
 ==================
 
 Hello [ ]
@@ -27,7 +27,54 @@ Hello [ ]
     (apply_bracket_end)))
 
 ==================
-Apply Hello (* *)[(* *)]
+Hello [\n]
+==================
+
+Hello [
+]
+
+---
+
+(source_file
+  (apply
+    (builtin_symbol)
+    (apply_bracket_begin)
+    (apply_bracket_end)))
+
+==================
+Hello [\n  \n]
+==================
+
+Hello [
+  
+]
+
+---
+
+(source_file
+  (apply
+    (builtin_symbol)
+    (apply_bracket_begin)
+    (apply_bracket_end)))
+
+==================
+   Hello [  \n  \n  ]
+==================
+
+  Hello [  
+  
+  ]
+
+---
+
+(source_file
+  (apply
+    (builtin_symbol)
+    (apply_bracket_begin)
+    (apply_bracket_end)))
+
+==================
+Hello (* *)[(* *)]
 ==================
 
 Hello (* *)[(* *)]
@@ -51,10 +98,10 @@ a @@ b @@ c
 ---
 
 (source_file
-  (apply_atat
+  (apply_atat_top
     (user_symbol)
     (apply_atat_operator)
-    (apply_atat
+    (apply_atat_top
       (user_symbol)
       (apply_atat_operator)
       (user_symbol))))
@@ -68,10 +115,10 @@ a @@@ b @@@ c
 ---
 
 (source_file
-  (apply_atatat
+  (apply_atatat_top
     (user_symbol)
     (apply_atatat_operator)
-    (apply_atatat
+    (apply_atatat_top
       (user_symbol)
       (apply_atatat_operator)
       (user_symbol))))
@@ -85,13 +132,13 @@ a @@ b @@@ c @@ d
 ---
 
 (source_file
-  (apply_atat
+  (apply_atat_top
     (user_symbol)
     (apply_atat_operator)
-    (apply_atatat
+    (apply_atatat_top
       (user_symbol)
       (apply_atatat_operator)
-      (apply_atat
+      (apply_atat_top
         (user_symbol)
         (apply_atat_operator)
         (user_symbol)))))

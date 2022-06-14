@@ -1,0 +1,52 @@
+==================
+{2 I}
+==================
+
+{2 I}
+
+---
+
+(source_file
+  (list
+    (list_bracket_begin)
+    (number)
+    (builtin_symbol)
+    (list_bracket_end)))
+
+==================
+{2 I - I 4}
+==================
+
+{2 I - I 4}
+
+---
+
+(source_file
+  (list
+    (list_bracket_begin)
+    (minus
+      (number)
+      (builtin_symbol)
+      (minus_operator)
+      (builtin_symbol)
+      (number))
+    (list_bracket_end)))
+
+==================
+{2 I + I 4}
+==================
+
+{2 I + I 4}
+
+---
+
+(source_file
+  (list
+    (list_bracket_begin)
+    (plus
+      (number)
+      (builtin_symbol)
+      (plus_operator)
+      (builtin_symbol)
+      (number))
+    (list_bracket_end)))
