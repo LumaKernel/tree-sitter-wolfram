@@ -12,10 +12,7 @@
 //! use tree_sitter::Parser;
 //!
 //! let code = r#"
-//!     datasource db {
-//!       provider = "postgresql"
-//!       url      = env("DATABASE_URL")
-//!     }
+//!     FullForm[{a, b, c, d}]
 //! "#;
 //! let mut parser = Parser::new();
 //! parser.set_language(tree_sitter_wolfram::language()).expect("Error loading Wolfram Language grammar");
