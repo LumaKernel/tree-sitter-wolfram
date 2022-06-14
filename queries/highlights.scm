@@ -1,10 +1,10 @@
-(user_symbol) @variable
-(builtin_symbol) @constant.builtin
+(user_symbol) @variable.user_symbol
+(builtin_symbol) @constant.builtin.builtin_symbol
 (comment) @comment
 (number) @number
 (string) @string
-(string_char_escape) @string.special
-(string_char_name_escape) @string.special
+(string_char_escape) @string.special.char_escape
+(string_char_name_escape) @string.special.char_name_escape
 (string_char_name) @string.special.char_name
 
 (apply_bracket_begin) @punctuation.bracket.apply.begin
