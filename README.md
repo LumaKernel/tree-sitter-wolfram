@@ -4,6 +4,9 @@
 
 [tree-sitter](https://github.com/tree-sitter/tree-sitter) parser definitions for [Wolfram Language](https://reference.wolfram.com/language/) schema.
 
+You may see excessive highlights definitions but one of the purposes of this parser is for my private site.
+Please feel free to open any issues or PRs.
+
 ## References
 
 - https://github.com/WLTools/LanguageSpec
