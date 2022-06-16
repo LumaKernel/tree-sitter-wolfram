@@ -22,6 +22,8 @@
 (string_begin) @punctuation.string.double.begin
 (string_end) @punctuation.string.double.end
 
+(compound_expression_operator) @operator.compound_expression
+
 (subscript_operator) @operator.subscript
 (pattern_test_operator) @operator.pattern_test
 (message_name_operator) @operator.message_name
