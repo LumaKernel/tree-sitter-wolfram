@@ -19,7 +19,8 @@
 (association_bracket_begin) @punctuation.bracket.association.begin
 (association_bracket_end) @punctuation.bracket.association.end
 
-(compound_expression) @punctuation.delimiter.compound_expression
+(string_begin) @punctuation.string.double.begin
+(string_end) @punctuation.string.double.end
 
 (subscript_operator) @operator.subscript
 (pattern_test_operator) @operator.pattern_test
@@ -74,6 +75,17 @@
 (apply_atatat_operator) @operator.apply_atatat
 (alternatives_operator) @operator.alternatives
 (string_join_operator) @operator.string_join
+(set_operator) @operator.set
+(set_delayed_operator) @operator.set_delayed
+(up_set_operator) @operator.up_set
+(up_set_delayed_operator) @operator.up_set_delayed
+(unset_operator) @operator.unset
+(tag_set_operator_left) @operator.tag_set.left
+(tag_set_operator_right) @operator.tag_set.right
+(tag_set_delayed_operator_left) @operator.tag_set_delayed.left
+(tag_set_delayed_operator_right) @operator.tag_set_delayed.right
+(tag_unset_operator_left) @operator.tag_unset.left
+(tag_unset_operator_right) @operator.tag_unset.right
 
 (blank) @tag.blank
 (blank_sequence) @tag.blank.sequence

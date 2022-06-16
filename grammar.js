@@ -9,6 +9,13 @@ const EXTERNAL = (() => {
 })();
 
 /** @type Rule */
+const SYMB_KEEP = (() => {
+  /** @type any */
+  const tmp = Symbol('SYMB_KEEP');
+  return tmp;
+})();
+
+/** @type Rule */
 const EXPR_KEEP = (() => {
   /** @type any */
   const tmp = Symbol('EXPR_KEEP');
@@ -25,7 +32,7 @@ const NULLABLE_EXPR_KEEP = (() => {
 /** @type Rule */
 const EXPR1_KEEP = (() => {
   /** @type any */
-  const tmp = Symbol('EXPR_KEEP');
+  const tmp = Symbol('EXPR1_KEEP');
   return tmp;
 })();
 
@@ -38,16 +45,6 @@ const EXPR1_UNARY_KEEP = (() => {
 
 const defaultReplacer = (/** @type any */ e) => e;
 let globalReplacer = defaultReplacer;
-
-// const dump = (obj) => {
-//   const fs = require('fs');
-//   const util = require('util');
-//   const path = require('path');
-//   const { homedir } = require('os');
-//   const debugLogFile = path.resolve(homedir(), 'node-debug.log');
-//
-//   fs.appendFileSync(debugLogFile, `${new Date().toLocaleTimeString()}: ${util.inspect(obj)}\n`);
-// };
 
 /** @type typeof grammar */
 const grammar0 = (/** @type any */ e) => {
@@ -453,12 +450,16 @@ const tmp5 = (() => {
         Object.entries(rules).flatMap(([name, builder]) => {
           const replacer =
             (
+              /** @type any */ symb,
               /** @type any */ expr,
               /** @type any */ expr1,
               /** @type any */ expr1_unary,
               /** @type any */ nullable_expr,
             ) =>
             (/** @type any */ e) => {
+              if (e === SYMB_KEEP) {
+                return symb;
+              }
               if (e === EXPR_KEEP) {
                 return expr;
               }
@@ -479,6 +480,7 @@ const tmp5 = (() => {
               (/** @type any */ $) => {
                 globalReplacer = replacer(
                   //
+                  $._expr1_symbol,
                   $._expr,
                   $._expr1,
                   $._expr1_unary,
@@ -492,7 +494,14 @@ const tmp5 = (() => {
             [
               `${name}_top`,
               (/** @type any */ $) => {
-                globalReplacer = replacer($._expr_top, $._expr1_top, $._expr1_unary_top, $._expr_top);
+                globalReplacer = replacer(
+                  //
+                  $._expr1_symbol_top,
+                  $._expr_top,
+                  $._expr1_top,
+                  $._expr1_unary_top,
+                  $._expr_top,
+                );
                 const r = builder($);
                 globalReplacer = defaultReplacer;
                 return r;
@@ -550,6 +559,11 @@ module.exports = grammar0({
     [$.compound_expression],
     [$._expr1, $.compound_expression],
     [$._expr1_unary, $._expr1_unary_special, $._expr1, $.compound_expression],
+    [$.tag_set_operator_left, $.tag_set_delayed_operator_left, $.tag_unset_operator_left],
+    [$._expr1_symbol],
+    [$.set_operator, $.tag_set_operator_right],
+    [$.set_delayed_operator, $.tag_set_delayed_operator_right],
+    [$.unset_operator, $.tag_unset_operator_right],
   ],
 
   rules: {
@@ -668,6 +682,8 @@ module.exports = grammar0({
     // _expr: ($) => prec.left(seq($._expr1, prec.left(repeat($._expr1)))),
     _expr_top: ($) => prec.left(30, choice(seq($._expr1_top, repeat($._expr1_unary_special_top)))),
     _expr: ($) => prec(20, choice(prec.left(seq($._expr1_unary_special, repeat1($._expr1_unary_special))), $._expr1)),
+    _expr1_symbol_top: ($) => prec(10, choice($._symbol)),
+    _expr1_symbol: ($) => prec(10, seq(repeat(/\n+/), choice($._symbol))),
     _expr1_unary_top: ($) =>
       prec(
         20,
@@ -801,6 +817,39 @@ module.exports = grammar0({
           ),
         ),
       compound_expression_operator: ($) => ';',
+
+      set: ($) => PREC.SET(seq0(EXPR_KEEP, $.set_operator, EXPR_KEEP)),
+      set_operator: ($) => '=',
+
+      set_delayed: ($) => PREC.SET_DELAYED(seq0(EXPR_KEEP, $.set_delayed_operator, EXPR_KEEP)),
+      set_delayed_operator: ($) => ':=',
+
+      up_set: ($) => PREC.UP_SET(seq0(EXPR_KEEP, $.up_set_operator, EXPR_KEEP)),
+      up_set_operator: ($) => '^=',
+
+      up_set_delayed: ($) => PREC.UP_SET_DELAYED(seq0(EXPR_KEEP, $.up_set_delayed_operator, EXPR_KEEP)),
+      up_set_delayed_operator: ($) => '^:=',
+
+      // unary but...
+      unset: ($) => PREC.UNSET(seq0(EXPR_KEEP, $.unset_operator)),
+      unset_operator: ($) => '=.',
+
+      tag_set: ($) =>
+        PREC.TAG_SET(seq0(SYMB_KEEP, $.tag_set_operator_left, EXPR_KEEP, $.tag_set_operator_right, EXPR_KEEP)),
+      tag_set_operator_left: ($) => '/:',
+      tag_set_operator_right: ($) => '=',
+
+      tag_set_delayed: ($) =>
+        PREC.TAG_SET_DELAYED(
+          seq0(SYMB_KEEP, $.tag_set_delayed_operator_left, EXPR_KEEP, $.tag_set_delayed_operator_right, EXPR_KEEP),
+        ),
+      tag_set_delayed_operator_left: ($) => '/:',
+      tag_set_delayed_operator_right: ($) => ':=',
+
+      tag_unset: ($) =>
+        PREC.TAG_SET_DELAYED(seq0(SYMB_KEEP, $.tag_unset_operator_left, EXPR_KEEP, $.tag_unset_operator_right)),
+      tag_unset_operator_left: ($) => '/:',
+      tag_unset_operator_right: ($) => '=.',
 
       pattern_test: ($) => PREC.PATTERN_TEST(seq0(EXPR_KEEP, $.pattern_test_operator, EXPR_KEEP)),
       pattern_test_operator: ($) => '?',
@@ -1026,10 +1075,13 @@ module.exports = grammar0({
     blank_sequence: ($) => /__(?:[a-zA-Z][a-zA-Z0-9]*)?/,
     blank_null_sequence: ($) => /___(?:[a-zA-Z][a-zA-Z0-9]*)?/,
 
-    string: ($) => seq('"', repeat(choice(/[^"\\\n]/, $.string_char_escape, $.string_char_name_escape)), '"'),
+    string: ($) =>
+      seq($.string_begin, repeat(choice(/[^"\\\n]/, $.string_char_escape, $.string_char_name_escape)), $.string_end),
     string_char_escape: ($) => choice('\\"', '\\\\', '\\n', '\\r', '\\t', '\\t', '\\v'),
     string_char_name_escape: ($) => seq('\\[', $.string_char_name, ']'),
     string_char_name: ($) => $._upper_identifier,
+    string_begin: ($) => '"',
+    string_end: ($) => '"',
     // Not supporting.
     // string_embedded_expression_escape: ($) => seq('\\!\\(\\*', ..., '\\)'),
 
@@ -1042,6 +1094,6 @@ module.exports = grammar0({
       /((([2-9]|[1-2]\d|[3][0-5])\^\^(\w*\.\w+|\w+\.\w*|\w+))|(\d*\.\d+|\d+\.\d*|\d+))((``(\+|-)?(\d*\.\d+|\d+\.\d*|\d+))|(`((\+|-)?(\d*\.\d+|\d+\.\d*|\d+))?))?(\*\^(\+|-)?\d+)?/,
 
     _lower_identifier: ($) => /[a-z][a-zA-Z0-9]*/,
-    _upper_identifier: ($) => /[A-Z][a-zA-Z0-9]*/,
+    _upper_identifier: ($) => /[$A-Z][a-zA-Z0-9]*/,
   },
 });

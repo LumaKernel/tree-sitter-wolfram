@@ -1,0 +1,10 @@
+==================
+$Output
+==================
+
+$Output
+
+---
+
+(source_file
+  (builtin_symbol))

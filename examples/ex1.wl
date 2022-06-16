@@ -23,3 +23,13 @@ f[3, 3]
 "string\[FilledDiamond] String \[Alpha]\[Beta]\[Gamma]"
 
 Cases[{1, 2, "ab", "cd", x, y}, _String]
+
+a = b
+a := b
+a ^= b
+a ^:= b
+a =.
+
+a /: b = c
+a /: b := c
+a /: b =.
