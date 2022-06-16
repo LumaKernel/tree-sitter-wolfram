@@ -9,8 +9,8 @@
   "scripts": {
     "build": "tree-sitter generate",
     "lint": "eslint \"**/*.{js,cjs,mjs,ts,tsx,json}\"",
-    "lint-fix": "pnpm run lint -- --fix",
-    "lint-quiet": "pnpm run lint -- --quiet",
+    "lint-fix": "pnpm run lint --fix",
+    "lint-quiet": "pnpm run lint --quiet",
     "parse-test": "tree-sitter parse ./examples/**/*.w",
     "test": "tree-sitter test",
     "check:tsc": "tsc --noEmit"
@@ -26,7 +26,7 @@
     "onchange": "^7.1.0",
     "prettier": "^2.5.1",
     "tree-sitter-cli": "^0.20.6",
-    "typescript": "^4.7.3"
+    "typescript": "~4.4"
   },
   "tree-sitter": [
     {
